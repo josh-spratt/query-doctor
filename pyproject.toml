@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "query-doctor"
+version = "0.1.0"
+description = "A tool to assist in the optimization of SQL queries."
+authors = ["Josh Spratt <jspratt02@icloud.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.11"
+redshift-connector = "^2.1.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
