@@ -6,7 +6,8 @@ from execution_plan_node import ExecutionPlanNode
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("query")
+    parser.add_argument("-q", "--query")
+    parser.add_argument("-f", "--file-mode")
     return parser.parse_args()
 
 
@@ -28,13 +29,9 @@ def explain_query(conn: redshift_connector.Connection, query: str) -> tuple[list
     return result
 
 
-def main():
-    args = parse_arguments()
-    query = args.query
-    conn = connect_to_redshift()
-    query_result = explain_query(conn, query)
+def parse_result(query_result: tuple[list]) -> ExecutionPlanNode:
     query_result[0][0] = "-> " + query_result[0][0]
-    root = ExecutionPlanNode(query, -1)
+    root = ExecutionPlanNode("Query Plan", -1)
     stack = [root]
     for row in query_result:
         if row[0].lstrip()[0:2] == "->":
@@ -48,8 +45,21 @@ def main():
             stack[-1].add_child(current_node)
 
             stack.append(current_node)
+    return root
 
-    root.print_tree()
+
+def main():
+    args = parse_arguments()
+    if args.file_mode:
+        with open(args.file_mode, "r") as f:
+            explain_plan_lines = tuple([x] for x in f.readlines())
+            query_tree = parse_result(explain_plan_lines)
+            query_tree.print_tree()
+    elif args.query:
+        conn = connect_to_redshift()
+        query_result = explain_query(conn, args.query)
+        query_tree = parse_result(query_result)
+        query_tree.print_tree()
 
 
 if __name__ == "__main__":
